@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة مؤشرات تحليل وتشخيص النظام</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- ApexCharts JS -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <!-- Google Fonts: Inter & Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Cairo', 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            border: 3px solid #bfdbfe;
+        }
+        .timeline-path {
+            position: absolute;
+            right: -1px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #dbeafe;
+        }
+        .apexcharts-tooltip {
+            direction: ltr;
+        }
+        /* Gemini Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .ai-action-btn {
+            background-color: #eef2ff;
+            color: #4f46e5;
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            font-size: 12px;
+        }
+        .ai-action-btn:hover {
+            background-color: #e0e7ff;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Dashboard Header -->
+        <header class="mb-8 flex flex-col sm:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800">لوحة مؤشرات تحليل وتشخيص النظام</h1>
+                <p class="text-gray-500 mt-2">ملخص شامل لنتائج التقييم وخارطة طريق المشروع</p>
+            </div>
+            <button id="generateSummaryBtn" class="mt-4 sm:mt-0 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                ✨ إنشاء ملخص تنفيذي
+            </button>
+        </header>
+
+        <!-- Main Grid Layout -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <!-- Summary Cards -->
+            <div class="card p-5 flex flex-col justify-between col-span-1 md:col-span-1">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold text-gray-700">التكلفة الإجمالية التقديرية</h3>
+                    <div class="p-2 bg-blue-100 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-gray-900 mt-4">26.5 مليون</p>
+                <p class="text-sm text-gray-500">جنيه مصري</p>
+            </div>
+
+            <div class="card p-5 flex flex-col justify-between col-span-1 md:col-span-1">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold text-gray-700">العائد على الاستثمار</h3>
+                     <div class="p-2 bg-green-100 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-gray-900 mt-4">3 سنوات</p>
+                <p class="text-sm text-gray-500">فترة استرداد التكاليف المتوقعة</p>
+            </div>
+
+            <div class="card p-5 flex flex-col justify-between col-span-1 md:col-span-1">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold text-gray-700">إجمالي التراخيص</h3>
+                     <div class="p-2 bg-purple-100 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H5v-2H3v-2H1.258a1 1 0 01-.97-1.243l1.258-7.5a1 1 0 01.97-1.243H15z" /></svg>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-gray-900 mt-4">2,600</p>
+                <p class="text-sm text-gray-500">ترخيص مستخدم</p>
+            </div>
+            
+            <div class="card p-5 flex flex-col justify-between col-span-1 md:col-span-1">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold text-gray-700">مدة المشروع</h3>
+                     <div class="p-2 bg-yellow-100 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-gray-900 mt-4">~12 شهرًا</p>
+                <p class="text-sm text-gray-500">من التشخيص إلى التشغيل الكامل</p>
+            </div>
+
+            <!-- Roadmap Timeline -->
+            <div class="card p-6 md:col-span-2 lg:col-span-2">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">خارطة طريق التنفيذ</h3>
+                <div class="relative pr-8">
+                    <div class="timeline-path"></div>
+                    <div class="space-y-8">
+                        <div class="relative timeline-item"><h4 class="font-semibold text-gray-700">التشخيص (Diagnosis)</h4><p class="text-sm text-gray-500">المدة: أسبوع</p><p class="text-sm text-gray-600 mt-1">المخرجات: FRD – Fit-Gap – RACI</p></div>
+                        <div class="relative timeline-item"><h4 class="font-semibold text-gray-700">التحليل والتصميم (Analysis & Design)</h4><p class="text-sm text-gray-500">المدة: شهران</p><p class="text-sm text-gray-600 mt-1">المخرجات: Solution Blueprint</p></div>
+                        <div class="relative timeline-item"><h4 class="font-semibold text-gray-700">التطوير (Development)</h4><p class="text-sm text-gray-500">المدة: 3 أشهر</p><p class="text-sm text-gray-600 mt-1">المخرجات: Configured System</p></div>
+                        <div class="relative timeline-item"><h4 class="font-semibold text-gray-700">الاختبار والنشر التجريبي (UAT & Pilot)</h4><p class="text-sm text-gray-500">المدة: شهران</p><p class="text-sm text-gray-600 mt-1">المخرجات: UAT Sign-off</p></div>
+                        <div class="relative timeline-item"><h4 class="font-semibold text-gray-700">النشر التدريجي (Rollout)</h4><p class="text-sm text-gray-500">المدة: 3 أشهر</p><p class="text-sm text-gray-600 mt-1">المخرجات: Go-Live جزئي</p></div>
+                        <div class="relative timeline-item"><h4 class="font-semibold text-gray-700">التشغيل النهائي (Final Go-Live)</h4><p class="text-sm text-gray-500">المدة: شهر واحد</p><p class="text-sm text-gray-600 mt-1">المخرجات: النظام يعمل فعليًا</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- License Distribution Chart -->
+            <div class="card p-6 md:col-span-2 lg:col-span-2">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">توزيع التراخيص حسب الإدارة</h3>
+                <div id="licenseChart"></div>
+            </div>
+            
+            <!-- Fit-Gap Analysis Table -->
+            <div class="card p-6 md:col-span-2 lg:col-span-4">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">ملخص تحليل الفجوات (Fit-Gap)</h3>
+                <div class="overflow-x-auto">
+                    <table id="fitGapTable" class="w-full text-sm text-right text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">الإدارة</th>
+                                <th scope="col" class="px-6 py-3">النظام الحالي</th>
+                                <th scope="col" class="px-6 py-3">أبرز الفجوات</th>
+                                <th scope="col" class="px-6 py-3">الحل المقترح</th>
+                                <th scope="col" class="px-6 py-3">إجراءات مقترحة بالذكاء الاصطناعي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white border-b">
+                                <td class="px-6 py-4 font-medium text-gray-900">الموارد البشرية</td>
+                                <td class="px-6 py-4">Access + Excel + ورقي (90%)</td>
+                                <td class="px-6 py-4">تكرار إدخال, غياب تقارير, بطء</td>
+                                <td class="px-6 py-4 text-green-600 font-semibold">Microsoft D365 HR</td>
+                                <td class="px-6 py-4"><button class="ai-action-btn">✨ توليد خطة عمل</button></td>
+                            </tr>
+                            <tr class="bg-gray-50 border-b">
+                                <td class="px-6 py-4 font-medium text-gray-900">المالية</td>
+                                <td class="px-6 py-4">ورقي 100% + أنظمة حكومية</td>
+                                <td class="px-6 py-4">زمن طويل, غياب التكامل والتقارير</td>
+                                <td class="px-6 py-4 text-green-600 font-semibold">D365 Finance + Integration</td>
+                                <td class="px-6 py-4"><button class="ai-action-btn">✨ توليد خطة عمل</button></td>
+                            </tr>
+                            <tr class="bg-white border-b">
+                                <td class="px-6 py-4 font-medium text-gray-900">الهندسية</td>
+                                <td class="px-6 py-4">ورقي + استشاريين</td>
+                                <td class="px-6 py-4">تأخير اعتماد المستخلصات</td>
+                                <td class="px-6 py-4 text-green-600 font-semibold">MS Project + D365 Projects</td>
+                                <td class="px-6 py-4"><button class="ai-action-btn">✨ توليد خطة عمل</button></td>
+                            </tr>
+                             <tr class="bg-gray-50 border-b">
+                                <td class="px-6 py-4 font-medium text-gray-900">المخازن</td>
+                                <td class="px-6 py-4">Excel + ورقي</td>
+                                <td class="px-6 py-4">تكرار إدخال, غياب التوحيد</td>
+                                <td class="px-6 py-4 text-green-600 font-semibold">D365 Inventory</td>
+                                <td class="px-6 py-4"><button class="ai-action-btn">✨ توليد خطة عمل</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Key Challenges & RACI Matrix -->
+            <div class="card p-6 md:col-span-2 lg:col-span-2">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">أبرز التحديات الحالية</h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start"><span class="inline-block bg-red-200 text-red-800 rounded-full px-2 py-1 text-xs font-bold mr-3 ml-2 mt-1">تحدي</span> بطء الإجراءات الإدارية والمالية</li>
+                    <li class="flex items-start"><span class="inline-block bg-red-200 text-red-800 rounded-full px-2 py-1 text-xs font-bold mr-3 ml-2 mt-1">تحدي</span> تكرار إدخال البيانات وغياب التكامل بين الإدارات</li>
+                    <li class="flex items-start"><span class="inline-block bg-red-200 text-red-800 rounded-full px-2 py-1 text-xs font-bold mr-3 ml-2 mt-1">تحدي</span> نقص التدريب المتخصص في الأنظمة الهندسية الحديثة</li>
+                    <li class="flex items-start"><span class="inline-block bg-red-200 text-red-800 rounded-full px-2 py-1 text-xs font-bold mr-3 ml-2 mt-1">تحدي</span> تأخير الموافقات واعتماد المستخلصات والمشتريات</li>
+                    <li class="flex items-start"><span class="inline-block bg-red-200 text-red-800 rounded-full px-2 py-1 text-xs font-bold mr-3 ml-2 mt-1">تحدي</span> غياب التقارير الذكية والمركزية لدعم اتخاذ القرار</li>
+                </ul>
+            </div>
+
+            <div class="card p-6 md:col-span-2 lg:col-span-2">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">مصفوفة المسؤوليات (RACI) - عينة</h3>
+                 <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-right text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3">النشاط</th>
+                                <th scope="col" class="px-4 py-3 text-center">R</th>
+                                <th scope="col" class="px-4 py-3 text-center">A</th>
+                                <th scope="col" class="px-4 py-3 text-center">C</th>
+                                <th scope="col" class="px-4 py-3 text-center">I</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white border-b"><td class="px-4 py-4 font-medium text-gray-900">Vision & Scope</td><td class="px-4 py-4">مديري الإدارات</td><td class="px-4 py-4">المحافظ</td><td class="px-4 py-4">بارادايس</td><td class="px-4 py-4">وزارة الاتصالات</td></tr>
+                            <tr class="bg-gray-50 border-b"><td class="px-4 py-4 font-medium text-gray-900">Fit-Gap</td><td class="px-4 py-4">الاستشاريين</td><td class="px-4 py-4">المحافظ</td><td class="px-4 py-4">بارادايس</td><td class="px-4 py-4">وزارة الاتصالات</td></tr>
+                            <tr class="bg-white border-b"><td class="px-4 py-4 font-medium text-gray-900">Go-Live</td><td class="px-4 py-4">بارادايس + الإدارات</td><td class="px-4 py-4">المحافظ</td><td class="px-4 py-4">وزارة الاتصالات</td><td class="px-4 py-4">الموظفين</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gemini AI Modal -->
+    <div id="geminiModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modalTitle" class="text-2xl font-bold text-gray-800"></h2>
+                <button id="closeModalBtn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- Loader and Gemini response will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Chart rendering logic
+            const licenseData = {
+                series: [300, 250, 150, 100, 80, 120, 100, 1500],
+                labels: ['المالية', 'الموارد البشرية', 'المخازن', 'الهندسية', 'التخطيط', 'التعاقدات', 'السيارات', 'مستخدمين محدودين']
+            };
+            var options = {
+                series: licenseData.series, labels: licenseData.labels, chart: { type: 'donut', height: 350, fontFamily: 'Cairo, Inter, sans-serif' },
+                plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'إجمالي التراخيص', formatter: (w) => w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString() } } } } },
+                dataLabels: { enabled: true, formatter: (val, opts) => opts.w.config.labels[opts.seriesIndex] + ": " + opts.w.globals.series[opts.seriesIndex] },
+                legend: { position: 'bottom', fontFamily: 'Cairo, Inter, sans-serif' },
+                responsive: [{ breakpoint: 480, options: { chart: { width: '100%' }, legend: { position: 'bottom' } } }],
+                tooltip: { y: { formatter: (val) => val.toLocaleString() + " ترخيص" } }
+            };
+            var chart = new ApexCharts(document.querySelector("#licenseChart"), options);
+            chart.render();
+
+            // Gemini Modal Logic
+            const modal = document.getElementById('geminiModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const modalBody = document.getElementById('modalBody');
+            
+            function openModal(title) {
+                modalTitle.innerText = title;
+                modal.classList.add('visible');
+                modalBody.innerHTML = '<div class="loader"></div><p class="text-center text-gray-600">جاري الإنشاء بواسطة الذكاء الاصطناعي...</p>';
+            }
+
+            function closeModal() {
+                modal.classList.remove('visible');
+            }
+
+            closeModalBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+            // Event listener for Executive Summary button
+            document.getElementById('generateSummaryBtn').addEventListener('click', () => {
+                openModal('الملخص التنفيذي (بواسطة Gemini)');
+                const systemPrompt = `أنت مستشار أعمال خبير متخصص في التحول الرقمي للجهات الحكومية في مصر. مهمتك هي إنشاء ملخص تنفيذي موجز ومهني بناءً على بيانات المشروع المقدمة. يجب أن يكون الملخص باللغة العربية، وموجهًا لمسؤول حكومي رفيع المستوى (مثل المحافظ)، ويجب أن يسلط الضوء على أهمية المشروع، والمقاييس الرئيسية، والتحديات التي يعالجها، والنتائج المتوقعة. حافظ على نبرة رسمية ومتفائلة.`;
+                const userQuery = `يرجى إنشاء ملخص تنفيذي لمشروع تحول رقمي كبير. فيما يلي نقاط البيانات الرئيسية: - هدف المشروع: استبدال الأنظمة الورقية القديمة والمتفرقة بحل موحد لنظام تخطيط موارد المؤسسات (Microsoft D365). - التكلفة التقديرية الإجمالية: 26.5 مليون جنيه مصري. - فترة العائد على الاستثمار المتوقعة: 3 سنوات. - مدة المشروع الإجمالية: حوالي 12 شهرًا. - التحديات الرئيسية الحالية التي يتم معالجتها: بطء الإجراءات الإدارية والمالية، تكرار إدخال البيانات وغياب التكامل، نقص التدريب المتخصص، تأخير الموافقات، غياب التقارير الذكية. - المشاكل الرئيسية في الإدارات (تحليل الفجوات): - الموارد البشرية: الاعتماد على الإجراءات الورقية بنسبة 90% مما يسبب بطئًا وتكرارًا. - المالية: الاعتماد على الإجراءات الورقية بنسبة 100% مما يطيل زمن الإجراءات ويمنع التكامل. - الهندسية: تأخير في اعتماد المستخلصات بسبب الإجراءات الورقية. - الحل المقترح: تنفيذ مرحلي لوحدات Microsoft D365 (الموارد البشرية، المالية، المشاريع، إلخ). بناءً على هذا، اكتب ملخصًا مقنعًا يبرر الاستثمار ويحدد الفوائد الاستراتيجية.`;
+                callGeminiAPI(systemPrompt, userQuery);
+            });
+
+            // Event delegation for department-specific action plan buttons
+            document.getElementById('fitGapTable').addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('ai-action-btn')) {
+                    const row = e.target.closest('tr');
+                    const cells = row.getElementsByTagName('td');
+                    const department = cells[0].innerText;
+                    const currentSystem = cells[1].innerText;
+                    const gap = cells[2].innerText;
+                    const solution = cells[3].innerText;
+
+                    openModal(`خطة عمل مقترحة لـ ${department}`);
+
+                    const systemPrompt = `أنت مستشار متخصص في إدارة التغيير والتحول الرقمي. مهمتك هي إنشاء رسالة قصيرة ومحفزة مع خطة عمل أولية لقسم حكومي يمر بمرحلة تغيير كبيرة في أنظمته. يجب أن تكون الرسالة باللغة العربية، وتستخدم نبرة إيجابية ومتعاونة، وتعترف بالتحديات الحالية، وتسلط الضوء على الفوائد المباشرة للموظفين، وتحدد الخطوات التالية بوضوح.`;
+                    const userQuery = `يرجى صياغة مسودة تواصل وخطة عمل أولية لـ "إدارة ${department}" بناءً على المعلومات التالية: - النظام الحالي: ${currentSystem}. - أبرز التحديات والفجوات: ${gap}. - الحل المقترح: ${solution}. يجب أن يتضمن الناتج فقرة تمهيدية موجهة للموظفين، تليها 2-3 نقاط كخطوات تالية مقترحة.`;
+                    
+                    callGeminiAPI(systemPrompt, userQuery);
+                }
+            });
+            
+            async function callGeminiAPI(systemPrompt, userQuery) {
+                const apiKey = ""; // API key is handled by the environment
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        throw new Error(`HTTP error! status: ${response.status}, body: ${errorBody}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates.length > 0) {
+                        const summaryText = result.candidates[0].content.parts[0].text;
+                        modalBody.innerHTML = `<div class="prose prose-lg max-w-none text-right">${summaryText.replace(/\n/g, '<br>')}</div>`;
+                    } else {
+                         throw new Error("Invalid response structure from API.");
+                    }
+
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    modalBody.innerHTML = `<p class="text-center text-red-600 font-semibold">حدث خطأ أثناء إنشاء المحتوى. يرجى المحاولة مرة أخرى لاحقًا.</p><p class="text-center text-xs text-gray-500 mt-2">${error.message}</p>`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
